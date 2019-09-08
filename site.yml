@@ -1,0 +1,49 @@
+---
+- name: Setup DoH on Pi
+  hosts: all
+  vars:
+    cloudflared: https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-arm.tgz
+    cloudfladed_opts: "--port 5053 --upstream https://1.1.1.1/dns-query  --upstream https://dns.google/dns-query --upstream https://1.0.0.1/dns-query"
+  tasks:
+    - name: Manage cloudflared user
+      user:
+        name: cloudflared
+        system: yes
+        create_home: no
+        shell: "/usr/sbin/nologin"
+      become: yes
+      register: "cloudflared_user"
+    - name: Install Cloudflared
+      unarchive:
+        dest: "/usr/local/bin"
+        mode: 0755
+        remote_src: yes
+        src: "{{ cloudflared }}"
+        owner: "{{ cloudflared_user.name }}"
+        group: "{{ cloudflared_user.name }}"
+      become: yes
+    - name: Configure Cloudflare
+      block:
+      - name: Write file
+        copy:
+          content: |
+            # Commandline args for cloudflared
+            CLOUDFLARED_OPTS={{ cloudfladed_opts }}
+          dest: "/etc/default/cloudflared"
+          owner: "{{ cloudflared_user.name }}"
+          group: "{{ cloudflared_user.name }}"
+        become: yes
+      - name: Create systemd service
+        copy:
+          src: "{{ playbook_dir }}/cloudflared.service"
+          dest: "/etc/systemd/system/cloudflared.service"
+          group: root
+          owner: root
+        become: yes
+      - name: Enable systemd service
+        systemd:
+          daemon_reload: yes
+          enabled: yes
+          name: cloudflared
+          state: restarted
+        become: yes
