@@ -2,7 +2,7 @@
 - name: Setup DoH on Pi
   hosts: all
   vars:
-    cloudflared_release: 2021.10.3
+    cloudflared_release: 2024.4.1
     cloudfladed_opts: "--port 5053 --upstream https://1.1.1.1/dns-query  --upstream https://dns.google/dns-query --upstream https://1.0.0.1/dns-query"
   tasks:
     - name: Manage cloudflared user
@@ -17,7 +17,7 @@
       get_url :
         dest: "/usr/local/bin/cloudflared"
         mode: 0755
-        url: "https://github.com/cloudflare/cloudflared/releases/download/{{ cloudflared_release }}/cloudflared-linux-arm"
+        url: "https://github.com/cloudflare/cloudflared/releases/download/{{ cloudflared_release }}/cloudflared-linux-arm64"
         owner: "{{ cloudflared_user.name }}"
         group: "{{ cloudflared_user.name }}"
       become: yes
